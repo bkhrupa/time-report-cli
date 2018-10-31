@@ -36,7 +36,7 @@ class CalcCommand extends Command
             $project = str_replace('.csv', '', $file->getFilename());
             $projectTotalMinutes = 0;
 
-            $this->comment('System: ' . $system);
+            $this->comment('Project: ' . $project . ' (' . $system . ')');
 
             foreach (file($file->getPathname()) as $line) {
                 if (!empty($line)) {
@@ -47,15 +47,17 @@ class CalcCommand extends Command
                     }, $row);
                     list($minutes, $ticket, $message) = $row;
 
+                    $this->line($minutes . "m\t" . $ticket . "\t" . $message);
                     $totalMinutes = $totalMinutes + (integer)$minutes;
                     $projectTotalMinutes = $projectTotalMinutes + (integer)$minutes;
                 }
             }
 
-            $this->info('Total by project "' . $project . '": ' . $this->minutesToHourString($projectTotalMinutes));
+            $this->info('Total by "' . $project . '": ' . $this->minutesToHourString($projectTotalMinutes));
+            $this->line('');
         }
 
-        $this->alert('Total: ' . $this->minutesToHourString($totalMinutes) . ' ('.$totalMinutes.') minutes');
+        $this->alert('Total: ' . $this->minutesToHourString($totalMinutes) . ' (' . $totalMinutes . ') minutes');
     }
 
     /**
