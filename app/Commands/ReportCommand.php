@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Commands\Report;
+namespace App\Commands;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\File;
 use LaravelZero\Framework\Commands\Command;
 
-class CalcCommand extends Command
+class ReportCommand extends Command
 {
     /**
      * The signature of the command.
      *
      * @var string
      */
-    protected $signature = 'report:calc';
+    protected $signature = 'report';
 
     /**
      * The description of the command.
