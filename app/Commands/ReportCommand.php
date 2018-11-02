@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
@@ -13,6 +14,13 @@ class ReportCommand extends Command
 
     const ACTION_CALC = 'calc';
     const ACTION_SEND = 'send';
+    const ACTION_MAKE_STUBS = 'make-stubs';
+
+    static protected $actions = [
+        self::ACTION_CALC,
+        self::ACTION_SEND,
+        self::ACTION_MAKE_STUBS,
+    ];
 
     /**
      * The signature of the command.
@@ -35,20 +43,26 @@ class ReportCommand extends Command
      */
     public function handle()
     {
-        $isNeedToSend = false;
         // Command Experiments
 //        if (!$this->hasOption('force') || !$this->option('force')) {
 //            $this->error(' already exists!');
 //
 //            return false;
 //        }
+        $action = $this->argument('action');
 
-        if ($this->hasArgument('action') && $this->argument('action') == self::ACTION_SEND) {
-            $isNeedToSend = true;
+        switch ($action) {
+            case self::ACTION_SEND:
+                $this->processTimeSessions(true);
+                break;
+            case self::ACTION_MAKE_STUBS:
+                $this->makeStubs();
+                break;
+            case self::ACTION_CALC:
+            default:
+                $this->processTimeSessions();
+                break;
         }
-
-        $this->processTimeSessions($isNeedToSend);
-
     }
 
     protected function processTimeSessions(bool $isNeedToSend = false)
@@ -102,6 +116,28 @@ class ReportCommand extends Command
         $this->alert('Total: ' . $this->minutesToHourString($totalMinutes) . ' (' . $totalMinutes . ') minutes');
     }
 
+    public function makeStubs()
+    {
+        foreach (File::allFiles(app_path('Systems')) as $file) {
+            $system = str_replace('.php', '', $file->getFilename());
+            // Systems/CodebaseLemberg.php -> codebase-lemberg
+            $dir = Str::kebab($system);
+            $dirPath = 'reports' . DIRECTORY_SEPARATOR . $dir;
+
+            if (!File::exists($dirPath)) {
+                File::makeDirectory($dirPath);
+            }
+
+            $stubFile = 'dummy-project-name.csv';
+            File::copy(
+                base_path('stubs' . DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR . $stubFile),
+                base_path($dirPath . DIRECTORY_SEPARATOR . $stubFile)
+            );
+
+            $this->info('Stub CSV file created for system "' . $system . '"');
+        }
+    }
+
     /**
      * Define the command's schedule.
      *
@@ -134,7 +170,7 @@ class ReportCommand extends Command
     protected function getArguments()
     {
         return [
-            ['action', InputArgument::OPTIONAL, 'The action.', 'calc'],
+            ['action', InputArgument::OPTIONAL, 'Available actions: "' . implode('; ', self::$actions) . '"', 'calc'],
         ];
     }
 
