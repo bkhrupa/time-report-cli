@@ -3,7 +3,6 @@
 namespace App\Commands;
 
 use App\Systems\AbstractSystem;
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -105,7 +104,10 @@ class ReportCommand extends Command
             $projectTotalMinutes = 0;
 
             $this->line('');
-            $this->line('Project: <comment>' . $report->get('project') . '</comment> (<bg=default;fg=blue>' . $report->get('system') . '</>)');
+            $this->line('Project: <comment>' . $report->get('project') . '</comment> ' .
+                'Tickets: <comment>' . $rows->count() . '</comment> ' .
+                '(<bg=default;fg=blue>' . $report->get('system') . '</>) '
+            );
 
             if (!$isNeedToSend) {
                 foreach ($rows as $row) {
@@ -120,12 +122,10 @@ class ReportCommand extends Command
                 }
 
                 $this->line('');
-                $this->info('Total by "' . $report->get('project') . '": ' . $this->minutesToHourString($projectTotalMinutes));
+                $this->info('Total by <comment>"' . $report->get('project') . '"</comment>: ' . $this->minutesToHourString($projectTotalMinutes));
             }
 
             if ($isNeedToSend) {
-                $this->info('Starting send for project ' . $report->get('project') . '. Tickets count ' . $rows->count());
-
                 $systemClassName = 'App\\Systems\\' . $report->get('system');
 
                 if (!class_exists($systemClassName)) {
@@ -141,10 +141,10 @@ class ReportCommand extends Command
                     $ticket = $row['ticket'];
                     $message = $row['message'];
 
-                    $this->line('sending ' . $ticket);
+                    $this->line('Starting send: <comment>' . $ticket . '</comment>');
 
                     if ($minutes < 1) {
-                        $this->warn('Skipping. 0 minutes in ticket: ' . $ticket);
+                        $this->warn('Skipp. 0 minutes in ticket: ' . $ticket);
                         continue;
                     }
 
@@ -159,7 +159,8 @@ class ReportCommand extends Command
                 }
 
                 // reset minutes
-                $this->info('Resetting data for' . $report->get('project'));
+                $this->line('');
+                $this->line('Resetting data for <comment>' . $report->get('project') . '</comment>');
 
                 $rows = $rows->map(function ($item) {
                     $item['minutes'] = 0;
@@ -208,17 +209,6 @@ class ReportCommand extends Command
         }
     }
 
-    /**
-     * Define the command's schedule.
-     *
-     * @param  \Illuminate\Console\Scheduling\Schedule $schedule
-     * @return void
-     */
-    public function schedule(Schedule $schedule): void
-    {
-        // $schedule->command(static::class)->everyMinute();
-    }
-
     protected function minutesToHourString($int)
     {
         $hours = floor($int / 60);
@@ -240,7 +230,20 @@ class ReportCommand extends Command
     protected function getArguments()
     {
         return [
-            ['action', InputArgument::OPTIONAL, 'Available actions: "' . implode('; ', self::$actions) . '"', 'calc'],
+            [
+                'action',
+                InputArgument::OPTIONAL,
+                'Available actions: "' . implode('; ', self::$actions) . '"' .
+                PHP_EOL .
+                '"calc" - calculate time sum' .
+                PHP_EOL .
+                '"send" - send all time to systems by projects' .
+                PHP_EOL .
+                '"make-stubs" - create default CSV files by systems' .
+                PHP_EOL
+                ,
+                'calc'
+            ],
         ];
     }
 
@@ -254,14 +257,6 @@ class ReportCommand extends Command
         return
             [
                 ['force', 'f', InputOption::VALUE_NONE, 'Force.'],
-
-                [
-                    'command',
-                    null,
-                    InputOption::VALUE_OPTIONAL,
-                    'The terminal command that should be assigned.',
-                    'command:name'
-                ],
             ];
     }
 }
