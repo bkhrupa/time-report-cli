@@ -2,13 +2,12 @@
 
 namespace App\Commands;
 
-use App\Systems\SystemInterface;
+use App\Systems\AbstractSystem;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
-use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
@@ -46,7 +45,7 @@ class ReportCommand extends Command
      */
     public function handle()
     {
-        $action = $this->getActionInput('action');
+        $action = $this->getActionInput();
 
         switch ($action) {
             case self::ACTION_SEND:
@@ -82,7 +81,7 @@ class ReportCommand extends Command
             $fileHandle = fopen($file, 'r');
 
             while (!feof($fileHandle)) {
-                $row = fgetcsv($fileHandle, 0, ';');
+                $row = fgetcsv($fileHandle, 0, ';', '\'');
 
                 if ($row) {
                     array_push($rows, [
@@ -134,7 +133,7 @@ class ReportCommand extends Command
                     continue;
                 }
 
-                /** @var SystemInterface $systemInstance */
+                /** @var AbstractSystem $systemInstance */
                 $systemInstance = new $systemClassName($this->getOutput());
 
                 foreach ($rows as $row) {
@@ -170,7 +169,7 @@ class ReportCommand extends Command
                 $fileHandle = fopen($report->get('full_path'), 'w');
 
                 $rows->each(function ($row) use ($fileHandle) {
-                    fputcsv($fileHandle, $row, ';');
+                    fputcsv($fileHandle, $row, ';', '\'');
                 });
 
                 fclose($fileHandle);
