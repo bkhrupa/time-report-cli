@@ -2,10 +2,13 @@
 
 namespace App\Commands;
 
+use App\Systems\SystemInterface;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
+use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
@@ -43,13 +46,7 @@ class ReportCommand extends Command
      */
     public function handle()
     {
-        // Command Experiments
-//        if (!$this->hasOption('force') || !$this->option('force')) {
-//            $this->error(' already exists!');
-//
-//            return false;
-//        }
-        $action = $this->argument('action');
+        $action = $this->getActionInput('action');
 
         switch ($action) {
             case self::ACTION_SEND:
@@ -69,51 +66,120 @@ class ReportCommand extends Command
     {
         $totalMinutes = 0;
 
+        $data = [];
         foreach (File::allFiles(base_path('reports')) as $file) {
             $system = explode(DIRECTORY_SEPARATOR, $file->getRelativePathname())[0];
             $project = str_replace('.csv', '', $file->getFilename());
-            $projectTotalMinutes = 0;
+            $rows = [];
 
-            $this->line('');
-            $this->line('Project: <comment>' . $project . '</comment> (<bg=default;fg=blue>' . $system . '</>)');
+            $data[$file->getFilename()] = [
+                'full_path' => $file->getPathname(),
+                'system' => ucfirst(Str::camel($system)),
+                'project' => $project,
+                'rows' => []
+            ];
 
-            $rows = file($file->getPathname());
+            $fileHandle = fopen($file, 'r');
 
-            if ($isNeedToSend) {
-                $this->info('Starting send for project ' . $project . '. Tickets count ' . count($rows));
-                $this->output->progressStart(count($rows));
-            }
+            while (!feof($fileHandle)) {
+                $row = fgetcsv($fileHandle, 0, ';');
 
-            foreach ($rows as $line) {
-                if (!empty($line)) {
-                    $row = explode(';', $line);
-
-                    $row = array_map(function ($item) {
-                        return trim($item);
-                    }, $row);
-                    list($minutes, $ticket, $message) = $row;
-
-                    if (!$isNeedToSend) {
-                        $this->line($minutes . "m\t" . $ticket . "\t" . $message);
-                    }
-                    $totalMinutes = $totalMinutes + (integer)$minutes;
-                    $projectTotalMinutes = $projectTotalMinutes + (integer)$minutes;
-
-                    if ($isNeedToSend) {
-                        $this->output->progressAdvance(1);
-                        sleep(1);
-                    }
+                if ($row) {
+                    array_push($rows, [
+                        'minutes' => (integer)trim($row[0]),
+                        'ticket' => trim($row[1]),
+                        'message' => trim($row[2]),
+                    ]);
                 }
             }
 
-            if (!$isNeedToSend) {
-                $this->line('');
-                $this->info('Total by "' . $project . '": ' . $this->minutesToHourString($projectTotalMinutes));
-            }
+            fclose($fileHandle);
+            $data[$file->getFilename()]['rows'] = $rows;
         }
+
+        //
+        $dataCollection = new Collection($data);
+
+        foreach ($dataCollection as $report) {
+            $report = new Collection($report);
+            $rows = new Collection($report->get('rows', []));
+            $projectTotalMinutes = 0;
+
+            $this->line('');
+            $this->line('Project: <comment>' . $report->get('project') . '</comment> (<bg=default;fg=blue>' . $report->get('system') . '</>)');
+
+            if (!$isNeedToSend) {
+                foreach ($rows as $row) {
+                    $minutes = $row['minutes'];
+                    $ticket = $row['ticket'];
+                    $message = $row['message'];
+
+                    $this->line($minutes . "m\t" . $ticket . "\t" . $message);
+
+                    $totalMinutes = $totalMinutes + $minutes;
+                    $projectTotalMinutes = $projectTotalMinutes + $minutes;
+                }
+
+                $this->line('');
+                $this->info('Total by "' . $report->get('project') . '": ' . $this->minutesToHourString($projectTotalMinutes));
+            }
+
+            if ($isNeedToSend) {
+                $this->info('Starting send for project ' . $report->get('project') . '. Tickets count ' . $rows->count());
+
+                $systemClassName = 'App\\Systems\\' . $report->get('system');
+
+                if (!class_exists($systemClassName)) {
+                    $this->error('Class ' . $systemClassName . ' not found');
+                    continue;
+                }
+
+                /** @var SystemInterface $systemInstance */
+                $systemInstance = new $systemClassName($this->getOutput());
+
+                foreach ($rows as $row) {
+                    $minutes = $row['minutes'];
+                    $ticket = $row['ticket'];
+                    $message = $row['message'];
+
+                    $this->line('sending ' . $ticket);
+
+                    if ($minutes < 1) {
+                        $this->warn('Skipping. 0 minutes in ticket: ' . $ticket);
+                        continue;
+                    }
+
+                    $systemInstance->addTimeToTicket(
+                        $report->get('project'),
+                        $ticket,
+                        $minutes,
+                        $message
+                    );
+
+                    $totalMinutes = $totalMinutes + $minutes;
+                }
+
+                // reset minutes
+                $this->info('Resetting data for' . $report->get('project'));
+
+                $rows = $rows->map(function ($item) {
+                    $item['minutes'] = 0;
+                    return $item;
+                });
+
+                $fileHandle = fopen($report->get('full_path'), 'w');
+
+                $rows->each(function ($row) use ($fileHandle) {
+                    fputcsv($fileHandle, $row, ';');
+                });
+
+                fclose($fileHandle);
+            }
+        };
 
         $this->line('');
         $this->alert('Total: ' . $this->minutesToHourString($totalMinutes) . ' (' . $totalMinutes . ') minutes');
+
     }
 
     public function makeStubs()

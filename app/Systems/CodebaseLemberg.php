@@ -2,69 +2,114 @@
 
 namespace App\Systems;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\TransferStats;
+use Illuminate\Console\OutputStyle;
+use phpDocumentor\Reflection\Types\Integer;
 
-class CodebaseLemberg
+class CodebaseLemberg implements SystemInterface
 {
+    protected $consoleOutput;
+    protected $verbosity;
+
     protected $apiUrl;
     protected $domain;
     protected $userLogin;
     protected $apiToken;
 
     /**
-     * CodebaseLemberg constructor.
-     * @param string $apiUrl
-     * @param string $domain
-     * @param string $userLogin
-     * @param string $apiToken
+     * {@inheritdoc}
      */
-    public function __construct(string $apiUrl, string $domain, string $userLogin, string $apiToken)
+    public function __construct(OutputStyle $consoleOutput, $verbosity = null)
     {
-        $this->apiUrl = $apiUrl;
-        $this->domain = $domain;
-        $this->userLogin = $userLogin;
-        $this->apiToken = $apiToken;
+        $this->consoleOutput = $consoleOutput;
+        $this->verbosity = $verbosity;
+
+        $this->apiUrl = config('codebase-lemberg.url');
+        $this->domain = config('codebase-lemberg.domain');
+        $this->userLogin = config('codebase-lemberg.user');
+        $this->apiToken = config('codebase-lemberg.token');
     }
 
     /**
      * @see https://support.codebasehq.com/kb/tickets-and-milestones/updating-tickets
      *
-     * @param $project
-     * @param $ticketId
-     * @param $time
-     * @param string $message
-     *
-     *
+     * @inheritdoc
      */
-    public function addTimeToTicket($project, $ticketId, $time, $message = '')
+    public function addTimeToTicket($project, $ticketId, int $time, $message)
     {
-        $apiUrl = env('CODEBASE_API_URL');
+        $apiUrl = $this->apiUrl;
         $user = $this->domain . '/' . $this->userLogin;
         $password = $this->apiToken;
 
         $client = new Client();
-        $res = $client->request(
-            'POST',
-            $this->apiUrl . '/'.$project.'/tickets/'.$ticketId.'/notes',
-            [
-                'auth' => [$user, $password],
-                'query' => [
-                    'from' => date('Y-m-29')
-                ],
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
-                ],
-                'on_stats' => function (TransferStats $stats) use (&$url) {
-                    $url = $stats->getEffectiveUri();
-                }
-            ]
-        );
 
-        dump($res->getStatusCode());
-        dump($url);
+        try {
+            $res = $client->request(
+                'POST',
+                $apiUrl . '/' . $project . '/tickets/' . $ticketId . '/notes',
+                [
+                    'auth' => [$user, $password],
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                    ],
+                    'json' => [
+                        'ticket_note' => [
+                            'content' => $message,
+                            'time_added' => $time,
+                        ]
+                    ],
+                    'on_stats' => function (TransferStats $stats) use (&$url) {
+                        $url = $stats->getEffectiveUri();
+                    }
+                ]
+            );
 
-        dump(json_decode($res->getBody()));
+            if ($res->getStatusCode() == 201) {
+                $this->consoleOutput->writeln('<fg=black;bg=green>Success. Ticket id:' . $ticketId . '</>');
+            }
+            else {
+                // TODO create error helper
+                $this->consoleOutput->error($res->getBody());
+            }
+        }
+        catch (ClientException $e) {
+            $this->consoleOutput->error($e->getMessage());
+
+            // TODO use verbosity
+            if ($this->verbosity) {
+                dump($e->getTraceAsString());
+            }
+
+//            $this->consoleOutput->error((string)$e->getResponse()->getBody());
+        }
+
+
+
+//        $client = new Client();
+//        $res = $client->request(
+//            'POST',
+//            $this->apiUrl . '/'.$project.'/tickets/'.$ticketId.'/notes',
+//            [
+//                'auth' => [$user, $password],
+//                'query' => [
+//                    'from' => date('Y-m-29')
+//                ],
+//                'headers' => [
+//                    'Content-Type' => 'application/json',
+//                    'Accept' => 'application/json',
+//                ],
+//                'on_stats' => function (TransferStats $stats) use (&$url) {
+//                    $url = $stats->getEffectiveUri();
+//                }
+//            ]
+//        );
+//
+//        dump($res->getStatusCode());
+//        dump($url);
+//
+//        dump(json_decode($res->getBody()));
 
         //        // Update ticket
 //        $project = 'lemberg-hub';
