@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Systems;
+namespace App\Contracts;
 
 use Illuminate\Console\OutputStyle;
 

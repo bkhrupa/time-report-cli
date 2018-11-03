@@ -1,11 +1,11 @@
 <?php
 
 namespace App\Systems;
+use App\Contracts\SystemInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\TransferStats;
 use Illuminate\Console\OutputStyle;
-use phpDocumentor\Reflection\Types\Integer;
 
 class CodebaseLemberg implements SystemInterface
 {
