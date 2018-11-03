@@ -186,6 +186,11 @@ class ReportCommand extends Command
     {
         foreach (File::allFiles(app_path('Systems')) as $file) {
             $system = str_replace('.php', '', $file->getFilename());
+
+            if ($system == 'AbstractSystem') {
+                continue;
+            }
+
             // Systems/CodebaseLemberg.php -> codebase-lemberg
             $dir = Str::kebab($system);
             $dirPath = 'reports' . DIRECTORY_SEPARATOR . $dir;
