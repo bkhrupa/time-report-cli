@@ -26,7 +26,6 @@ abstract class AbstractSystem
     {
         $this->consoleOutput = $consoleOutput;
         $this->verbosity = $verbosity;
-
     }
 
     /**
@@ -37,4 +36,14 @@ abstract class AbstractSystem
      * @return mixed
      */
     abstract public function addTimeToTicket($project, $ticketId, int $time, $message);
+
+    public function success($message)
+    {
+        $this->consoleOutput->writeln('<fg=black;bg=green>' . $message . '</>');
+    }
+
+    public function error($message)
+    {
+        $this->consoleOutput->writeln('<fg=white;bg=red>' . $message . '</>');
+    }
 }

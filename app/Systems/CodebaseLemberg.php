@@ -64,13 +64,12 @@ class CodebaseLemberg extends AbstractSystem
             );
 
             if ($res->getStatusCode() == 201) {
-                $this->consoleOutput->writeln('<fg=black;bg=green>Success. Ticket id: ' . $ticketId . '</>');
+                $this->success('Success. Ticket: ' . $ticketId);
             } else {
-                // TODO create error helper
-                $this->consoleOutput->error($res->getBody());
+                $this->error((string)$res->getBody());
             }
         } catch (ClientException $e) {
-            $this->consoleOutput->error($e->getMessage());
+            $this->error($e->getMessage());
 
             // TODO use verbosity
             if ($this->verbosity) {

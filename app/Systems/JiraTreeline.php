@@ -35,11 +35,11 @@ class JiraTreeline extends AbstractSystem
             $ret = $issueService->addWorklog($ticketId, $workLog);
             $workLogid = $ret->{'id'};
 
-            $this->consoleOutput->writeln('<fg=black;bg=green>Success. Ticket id: ' . $ticketId . '</>');
+            $this->success('Success. Ticket: ' . $ticketId);
         } catch (JiraException $e) {
-            dump($e);
+            $this->error($e->getMessage());
         } catch (\Exception $e) {
-            dump($e);
+            $this->error($e->getMessage());
         }
     }
 }
