@@ -38,12 +38,20 @@ class ReportCommand extends Command
     protected $description = 'Command description';
 
     /**
+     * @var string
+     */
+    protected $reportsPath = '';
+
+    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
+        $this->validateConfig();
+        $this->prepareReportsPath();
+
         $action = $this->getActionInput();
 
         switch ($action) {
@@ -65,7 +73,7 @@ class ReportCommand extends Command
         $totalMinutes = 0;
 
         $data = [];
-        foreach (File::allFiles(base_path('reports')) as $file) {
+        foreach (File::allFiles($this->reportsPath) as $file) {
             $system = explode(DIRECTORY_SEPARATOR, $file->getRelativePathname())[0];
             $project = str_replace('.csv', '', $file->getFilename());
             $rows = [];
@@ -193,23 +201,25 @@ class ReportCommand extends Command
 
             // Systems/CodebaseLemberg.php -> codebase-lemberg
             $dir = Str::kebab($system);
-            $dirPath = 'reports' . DIRECTORY_SEPARATOR . $dir;
+            $dirPath = $this->reportsPath . DIRECTORY_SEPARATOR . $dir;
 
             if (!File::exists($dirPath)) {
                 File::makeDirectory($dirPath);
             }
 
             $stubFile = 'dummy-project-name.csv';
-            File::copy(
-                base_path('stubs' . DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR . $stubFile),
-                base_path($dirPath . DIRECTORY_SEPARATOR . $stubFile)
-            );
+            $stubContent = '0;3;\'This is a stub example CSV file\'' . PHP_EOL;
+            File::put($dirPath . DIRECTORY_SEPARATOR . $stubFile, $stubContent);
 
             $this->info('Stub CSV file created for system "' . $system . '"');
         }
     }
 
-    protected function minutesToHourString($int)
+    /**
+     * @param $int
+     * @return string
+     */
+    protected function minutesToHourString(int $int)
     {
         $hours = floor($int / 60);
         $minutes = $int % 60;
@@ -217,9 +227,30 @@ class ReportCommand extends Command
         return $hours . 'h ' . $minutes . 'm';
     }
 
+    /**
+     * @return string
+     */
     protected function getActionInput()
     {
         return trim($this->argument('action'));
+    }
+
+    /**
+     * @return void
+     */
+    protected function prepareReportsPath()
+    {
+        $this->reportsPath = $this->option('reports-path');
+
+        if (!File::exists($this->reportsPath)) {
+            $this->error('Reports path not exists. "' . $this->reportsPath . '"');
+            exit;
+        }
+    }
+
+    protected function validateConfig()
+    {
+        // TODO implements
     }
 
     /**
@@ -256,6 +287,7 @@ class ReportCommand extends Command
     {
         return
             [
+                ['reports-path', null, InputOption::VALUE_OPTIONAL, 'Reports path', config('app.reports_path')],
                 ['force', 'f', InputOption::VALUE_NONE, 'Force.'],
             ];
     }

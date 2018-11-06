@@ -56,4 +56,6 @@ return [
         App\Providers\AppServiceProvider::class,
     ],
 
+    'reports_path' => base_path(env('REPORTS_PATH', 'reports')),
+
 ];
