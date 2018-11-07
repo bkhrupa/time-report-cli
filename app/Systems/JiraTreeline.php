@@ -13,7 +13,7 @@ class JiraTreeline extends AbstractSystem
     /**
      * @inheritdoc
      */
-    public function addTimeToTicket($project, $ticketId, int $time, $message)
+    public function addTimeToTicket($project, $ticketId, int $time, $message) : bool
     {
         try {
             $issueService = new IssueService(new ArrayConfiguration(
@@ -36,10 +36,13 @@ class JiraTreeline extends AbstractSystem
             $workLogid = $ret->{'id'};
 
             $this->success('Success. Ticket: ' . $ticketId);
+            return true;
         } catch (JiraException $e) {
             $this->error($e->getMessage());
         } catch (\Exception $e) {
             $this->error($e->getMessage());
         }
+
+        return false;
     }
 }

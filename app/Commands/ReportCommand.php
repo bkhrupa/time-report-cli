@@ -144,6 +144,8 @@ class ReportCommand extends Command
                 /** @var AbstractSystem $systemInstance */
                 $systemInstance = new $systemClassName($this->getOutput());
 
+                $rowsToReset = new Collection();
+
                 foreach ($rows as $row) {
                     $minutes = $row['minutes'];
                     $ticket = $row['ticket'];
@@ -153,10 +155,14 @@ class ReportCommand extends Command
 
                     if ($minutes < 1) {
                         $this->warn('Skipp. 0 minutes in ticket: ' . $ticket);
+
+                        // Add to reset
+                        $rowsToReset->push($row);
+
                         continue;
                     }
 
-                    $systemInstance->addTimeToTicket(
+                    $isSuccess = $systemInstance->addTimeToTicket(
                         $report->get('project'),
                         $ticket,
                         $minutes,
@@ -164,20 +170,22 @@ class ReportCommand extends Command
                     );
 
                     $totalMinutes = $totalMinutes + $minutes;
+
+                    // reset minutes for success sending ticket
+                    if ($isSuccess) {
+                        $row['minutes'] = 0;
+                    }
+                    // Add to reset
+                    $rowsToReset->push($row);
                 }
 
                 // reset minutes
                 $this->line('');
                 $this->line('Resetting data for <comment>' . $report->get('project') . '</comment>');
 
-                $rows = $rows->map(function ($item) {
-                    $item['minutes'] = 0;
-                    return $item;
-                });
-
                 $fileHandle = fopen($report->get('full_path'), 'w');
 
-                $rows->each(function ($row) use ($fileHandle) {
+                $rowsToReset->each(function ($row) use ($fileHandle) {
                     fputcsv($fileHandle, $row, ';', '\'');
                 });
 
@@ -187,7 +195,6 @@ class ReportCommand extends Command
 
         $this->line('');
         $this->alert('Total: ' . $this->minutesToHourString($totalMinutes) . ' (' . $totalMinutes . ') minutes');
-
     }
 
     public function makeStubs()

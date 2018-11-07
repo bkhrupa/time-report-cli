@@ -33,7 +33,7 @@ class CodebaseLemberg extends AbstractSystem
      *
      * @inheritdoc
      */
-    public function addTimeToTicket($project, $ticketId, int $time, $message)
+    public function addTimeToTicket($project, $ticketId, int $time, $message) : bool
     {
         $apiUrl = $this->apiUrl;
         $user = $this->domain . '/' . $this->userLogin;
@@ -44,7 +44,7 @@ class CodebaseLemberg extends AbstractSystem
         try {
             $res = $client->request(
                 'POST',
-                $apiUrl . '/' . $project . '/tickets/' . $ticketId . '/notes',
+                $apiUrl . '/' . $project . '/ticketsss/' . $ticketId . '/notes',
                 [
                     'auth' => [$user, $password],
                     'headers' => [
@@ -65,6 +65,7 @@ class CodebaseLemberg extends AbstractSystem
 
             if ($res->getStatusCode() == 201) {
                 $this->success('Success. Ticket: ' . $ticketId);
+                return true;
             } else {
                 $this->error((string)$res->getBody());
             }
@@ -77,5 +78,7 @@ class CodebaseLemberg extends AbstractSystem
             }
 //            $this->consoleOutput->error((string)$e->getResponse()->getBody());
         }
+
+        return false;
     }
 }

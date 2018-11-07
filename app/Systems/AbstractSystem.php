@@ -33,9 +33,9 @@ abstract class AbstractSystem
      * @param string $ticketId
      * @param int $time
      * @param string $message
-     * @return mixed
+     * @return bool
      */
-    abstract public function addTimeToTicket($project, $ticketId, int $time, $message);
+    abstract public function addTimeToTicket($project, $ticketId, int $time, $message) : bool;
 
     public function success($message)
     {
