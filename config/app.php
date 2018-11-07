@@ -26,7 +26,7 @@ return [
     |
     */
 
-    'version' => app('git.version'),
+    'version' => '0.0.1',
 
     /*
     |--------------------------------------------------------------------------
@@ -55,7 +55,5 @@ return [
     'providers' => [
         App\Providers\AppServiceProvider::class,
     ],
-
-    'reports_path' => base_path(env('REPORTS_PATH', 'reports')),
 
 ];

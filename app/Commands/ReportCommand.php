@@ -294,7 +294,7 @@ class ReportCommand extends Command
     {
         return
             [
-                ['reports-path', null, InputOption::VALUE_OPTIONAL, 'Reports path', config('app.reports_path')],
+                ['reports-path', null, InputOption::VALUE_OPTIONAL, 'Reports path', 'reports'],
                 ['force', 'f', InputOption::VALUE_NONE, 'Force.'],
             ];
     }
