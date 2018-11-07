@@ -44,7 +44,7 @@ class CodebaseLemberg extends AbstractSystem
         try {
             $res = $client->request(
                 'POST',
-                $apiUrl . '/' . $project . '/ticketsss/' . $ticketId . '/notes',
+                $apiUrl . '/' . $project . '/tickets/' . $ticketId . '/notes',
                 [
                     'auth' => [$user, $password],
                     'headers' => [
