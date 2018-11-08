@@ -56,55 +56,22 @@ class ReportCommand extends Command
 
         switch ($action) {
             case self::ACTION_SEND:
-                $this->processTimeSessions(true);
+                $this->actionsProcessTimeSessions(true);
                 break;
             case self::ACTION_MAKE_STUBS:
-                $this->makeStubs();
+                $this->actionMakeStubs();
                 break;
             case self::ACTION_CALC:
             default:
-                $this->processTimeSessions();
+                $this->actionsProcessTimeSessions();
                 break;
         }
     }
 
-    protected function processTimeSessions(bool $isNeedToSend = false)
+    protected function actionsProcessTimeSessions(bool $isNeedToSend = false)
     {
         $totalMinutes = 0;
-
-        $data = [];
-        foreach (File::allFiles($this->reportsPath) as $file) {
-            $system = explode(DIRECTORY_SEPARATOR, $file->getRelativePathname())[0];
-            $project = str_replace('.csv', '', $file->getFilename());
-            $rows = [];
-
-            $data[$file->getFilename()] = [
-                'full_path' => $file->getPathname(),
-                'system' => ucfirst(Str::camel($system)),
-                'project' => $project,
-                'rows' => []
-            ];
-
-            $fileHandle = fopen($file, 'r');
-
-            while (!feof($fileHandle)) {
-                $row = fgetcsv($fileHandle, 0, ';', '\'');
-
-                if ($row) {
-                    array_push($rows, [
-                        'minutes' => (integer)trim($row[0]),
-                        'ticket' => trim($row[1]),
-                        'message' => trim($row[2]),
-                    ]);
-                }
-            }
-
-            fclose($fileHandle);
-            $data[$file->getFilename()]['rows'] = $rows;
-        }
-
-        //
-        $dataCollection = new Collection($data);
+        $dataCollection = $this->getReportsData();
 
         foreach ($dataCollection as $report) {
             $report = new Collection($report);
@@ -197,7 +164,10 @@ class ReportCommand extends Command
         $this->alert('Total: ' . $this->minutesToHourString($totalMinutes) . ' (' . $totalMinutes . ') minutes');
     }
 
-    public function makeStubs()
+    /**
+     *
+     */
+    public function actionMakeStubs()
     {
         foreach (File::allFiles(app_path('Systems')) as $file) {
             $system = str_replace('.php', '', $file->getFilename());
@@ -220,6 +190,52 @@ class ReportCommand extends Command
 
             $this->info('Stub CSV file created for system "' . $system . '"');
         }
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection
+     */
+    protected function getReportsData()
+    {
+        $data = [];
+
+        foreach (File::allFiles($this->reportsPath) as $file) {
+            $system = explode(DIRECTORY_SEPARATOR, $file->getRelativePathname())[0];
+            $project = str_replace('.csv', '', $file->getFilename());
+            $rows = [];
+
+            $data[$file->getFilename()] = [
+                'full_path' => $file->getPathname(),
+                'system' => ucfirst(Str::camel($system)),
+                'project' => $project,
+                'rows' => []
+            ];
+
+            $fileHandle = fopen($file, 'r');
+
+            while (!feof($fileHandle)) {
+                $row = fgetcsv($fileHandle, 0, ';', '\'');
+
+                if ($row) {
+                    if (count($row) !== 3) {
+                        $this->error('Syntactic error in line:');
+                        $this->line(implode(';', $row));
+                        exit;
+                    }
+
+                    array_push($rows, [
+                        'minutes' => (integer)trim($row[0]),
+                        'ticket' => trim($row[1]),
+                        'message' => trim($row[2]),
+                    ]);
+                }
+            }
+
+            fclose($fileHandle);
+            $data[$file->getFilename()]['rows'] = $rows;
+        }
+
+        return new Collection($data);
     }
 
     /**
