@@ -123,7 +123,7 @@ class ReportCommand extends Command
                     $ticket = $row['ticket'];
                     $message = $row['message'];
 
-                    $this->line($minutes . "m\t" . $ticket . "\t" . $message);
+                    $this->line($minutes . 'm' . "\t" . $this->minutesToHourString($minutes) . "\t" . $ticket . "\t" . $message);
 
                     $totalMinutes = $totalMinutes + $minutes;
                     $projectTotalMinutes = $projectTotalMinutes + $minutes;
