@@ -1,8 +1,8 @@
 {
-    "name": "laravel-zero/laravel-zero",
-    "description": "The Laravel Zero Framework.",
-    "keywords": ["framework", "laravel", "laravel zero", "console", "cli"],
-    "homepage": "https://laravel-zero.com",
+    "name": "bkhrupa/time-report-cli",
+    "description": "Time Report CLI.",
+    "keywords": ["laravel", "laravel zero", "console", "cli"],
+    "homepage": "https://github.com/bkhrupa/time-report-cli",
     "type": "project",
     "license": "MIT",
     "support": {
@@ -11,12 +11,13 @@
     },
     "authors": [
         {
-            "name": "Nuno Maduro",
-            "email": "enunomaduro@gmail.com"
+            "name": "Bohdan Khrupa",
+            "email": "lizard.freddi@gmail.com"
         }
     ],
     "require": {
-        "php": "^7.1.3",
+        "php": ">=7.1.3",
+        "ext-curl": "*",
         "guzzlehttp/guzzle": "^6.3",
         "laravel-zero/framework": "5.7.*",
         "lesstif/php-jira-rest-client": "^1.33",
