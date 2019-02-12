@@ -78,6 +78,11 @@ class ReportCommand extends Command
             $rows = new Collection($report->get('rows', []));
             $projectTotalMinutes = 0;
 
+            // skip empty reports
+            if (!$rows->sum('minutes')) {
+            	continue;
+			}
+
             $this->line('');
             $this->line('Project: <comment>' . $report->get('project') . '</comment> ' .
                 'Tickets: <comment>' . $rows->count() . '</comment> ' .
