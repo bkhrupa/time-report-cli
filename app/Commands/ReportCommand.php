@@ -95,7 +95,15 @@ class ReportCommand extends Command
                     $ticket = $row['ticket'];
                     $message = $row['message'];
 
-                    $this->line($minutes . 'm' . "\t" . $this->minutesToHourString($minutes) . "\t" . $ticket . "\t" . $message);
+                    // Must be 15 if divided
+                    // TODO add to send process
+                    if ($minutes % 15) {
+                        $this->error($minutes . 'm' . "\t" . $this->minutesToHourString($minutes) . "\t" . $ticket . "\t" . $message);
+                    }
+                    else {
+                        $this->line($minutes . 'm' . "\t" . $this->minutesToHourString($minutes) . "\t" . $ticket . "\t" . $message);
+                    }
+
 
                     $totalMinutes = $totalMinutes + $minutes;
                     $projectTotalMinutes = $projectTotalMinutes + $minutes;
