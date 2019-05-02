@@ -80,8 +80,8 @@ class ReportCommand extends Command
 
             // skip empty reports
             if (!$rows->sum('minutes')) {
-            	continue;
-			}
+                continue;
+            }
 
             $this->line('');
             $this->line('Project: <comment>' . $report->get('project') . '</comment> ' .
@@ -99,8 +99,7 @@ class ReportCommand extends Command
                     // TODO add to send process
                     if ($minutes % 15) {
                         $this->error($minutes . 'm' . "\t" . $this->minutesToHourString($minutes) . "\t" . $ticket . "\t" . $message);
-                    }
-                    else {
+                    } else {
                         $this->line($minutes . 'm' . "\t" . $this->minutesToHourString($minutes) . "\t" . $ticket . "\t" . $message);
                     }
 
@@ -110,7 +109,12 @@ class ReportCommand extends Command
                 }
 
                 $this->line('');
-                $this->info('Total by <comment>"' . $report->get('project') . '"</comment>: ' . $this->minutesToHourString($projectTotalMinutes));
+                // Must be 15 if divided
+                if ($projectTotalMinutes % 15) {
+                    $this->error('Total by <comment>"' . $report->get('project') . '"</comment>: ' . $this->minutesToHourString($projectTotalMinutes));
+                } else {
+                    $this->info('Total by <comment>"' . $report->get('project') . '"</comment>: ' . $this->minutesToHourString($projectTotalMinutes));
+                }
             }
 
             if ($isNeedToSend) {
