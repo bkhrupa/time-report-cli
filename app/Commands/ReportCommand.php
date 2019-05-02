@@ -108,13 +108,17 @@ class ReportCommand extends Command
                     $projectTotalMinutes = $projectTotalMinutes + $minutes;
                 }
 
-                $this->line('');
                 // Must be 15 if divided
+                $totalMinutesString = 'Total: ' . $this->minutesToHourString($projectTotalMinutes);
+                $length = Str::length(strip_tags($totalMinutesString));
+
                 if ($projectTotalMinutes % 15) {
-                    $this->error('Total by <comment>"' . $report->get('project') . '"</comment>: ' . $this->minutesToHourString($projectTotalMinutes));
+                    $this->error($totalMinutesString);
                 } else {
-                    $this->info('Total by <comment>"' . $report->get('project') . '"</comment>: ' . $this->minutesToHourString($projectTotalMinutes));
+                    $this->info($totalMinutesString);
                 }
+
+                $this->info(str_repeat('- ', round($length / 2)));
             }
 
             if ($isNeedToSend) {
