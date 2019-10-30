@@ -26,7 +26,7 @@ return [
     |
     */
 
-    'version' => '0.0.1',
+    'version' => '1.0.0',
 
     /*
     |--------------------------------------------------------------------------
@@ -55,5 +55,4 @@ return [
     'providers' => [
         App\Providers\AppServiceProvider::class,
     ],
-
 ];

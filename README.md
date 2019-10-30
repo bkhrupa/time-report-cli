@@ -4,7 +4,7 @@ Based on [laravel-zero](http://laravel-zero.com/).
 
 ## Requirements
 
-* PHP >= 7.1.3
+* PHP >= ^7.2
 * ext-curl
 * ext-dom
 * ext-fileinfo
@@ -43,7 +43,7 @@ Based on [laravel-zero](http://laravel-zero.com/).
 1. Create default CSV files by all available systems 
 
     ```
-    $ ./time-report-cli report make-stubs
+    $ ./time-report-cli report:make-stubs
     ```
 
 2. Rename `dummy-project-name.csv` to `real-project-name.csv`

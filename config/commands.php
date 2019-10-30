@@ -40,7 +40,8 @@ return [
     */
 
     'add' => [
-        // ..
+        \App\Commands\MakeStubsCommand::class,
+        \App\Commands\SendCommand::class,
     ],
 
     /*
@@ -74,7 +75,7 @@ return [
     */
 
     'remove' => [
-        // ..
+//        \App\Commands\InspiringCommand::class,
     ],
 
 ];
