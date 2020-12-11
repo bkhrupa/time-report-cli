@@ -208,6 +208,7 @@ abstract class ReportBase extends Command
 
         $this->line('');
         $this->alert('Total: ' . $this->minutesToHourString($totalMinutes) . ' (' . $totalMinutes . ') minutes');
+        $this->line('Run at:' . date('Y-m-d H:i:s'));
     }
 
     /**
